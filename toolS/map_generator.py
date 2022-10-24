@@ -113,7 +113,7 @@ int mapFunction(int x)
 
 out.append('\n// <END OF GENERATED CODE> ----------------------------------------------//')
 
-print '\n'.join(out)
+print ('\n'.join(out))
 
 # plot the diagram... 
 yArray = np.array(yList)
