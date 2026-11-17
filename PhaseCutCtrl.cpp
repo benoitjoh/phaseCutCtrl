@@ -1,6 +1,8 @@
 #include "PhaseCutCtrl.h"
 #include "Arduino.h"
 
+
+//turn debug on. this gives some signals to pin13
 //#define DEBUG_PCC 1
 
 #define MAX_POWER 2048
@@ -106,16 +108,21 @@ void PhaseCutCtrl::isr_AcZeroCallback()
         return;
     }
 
-    tcnt1_last_event = TCNT1;
+#ifdef DEBUG_PCC
+        PORTB |=  B00100000; //set pin13 back to HIGH for timemeasurement
+#endif // DEBUG_PCC
+
+
+    tcnt1_last_event = TCNT1; //this costs 400ns
 
     // reset counter
     TCNT1 = 0;
 
 #ifdef DEBUG_PCC
     PORTB |=  B00100000; //set pin13 back to HIGH for timemeasurement
-#endif // DEBUG_SPEEDCONTROL
+#endif // DEBUG_PCC
 
-    tcnt1_aggregate += tcnt1_last_event;
+    tcnt1_aggregate += (tcnt1_last_event - 8); // add the missed cycle count here
     lastAcZeroMillis = millis(); // for acNetIsAlive()
 
 
@@ -129,7 +136,7 @@ void PhaseCutCtrl::isr_AcZeroCallback()
 
 #ifdef DEBUG_PCC
     PORTB &= ~B00100000; //set pin13 to LOW for timemeasurement
-#endif // DEBUG_SPEEDCONTROL
+#endif // DEBUG_PCC
 
 }
 
@@ -150,8 +157,8 @@ void PhaseCutCtrl::waitUntilAcZero(int offsetMys)
 // offsetMys: fire xx mycroseconds before solid state
 
 {
-    int lowerLimit = tcnt1_average - (offsetMys * 2) - 1000;
-    int upperLimit = lowerLimit + 100;
+    int lowerLimit = tcnt1_average - (offsetMys * 2) - 1100;
+    int upperLimit = lowerLimit + 200;
 
     while(true)
     {
@@ -199,7 +206,7 @@ void PhaseCutCtrl::set_pcc(int pcc_power)
 
     #ifdef DEBUG_PCC
                 PORTB &= ~B00100000; //set pin13 to LOW for timemeasurement
-                Serial.print("PCC:\t" + String(pcc_Power) + "\t" + String(oc_value) + "\n");
+                Serial.print("PCC:\t" + String(pcc_power) + "\t" + String(oc_value) + "\n");
     #endif // DEBUG_PCC
 
             }
